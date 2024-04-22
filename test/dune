@@ -1,0 +1,7 @@
+(tests
+ (names test)
+ (libraries alcotest ppx_z3)
+ (preprocess
+  (pps ppx_z3))
+ (action
+  (run %{test} -e)))

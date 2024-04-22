@@ -1,0 +1,4 @@
+if-then-else = keyword-first
+parse-docstrings = true
+sequence-blank-line = preserve-one
+sequence-style = separator

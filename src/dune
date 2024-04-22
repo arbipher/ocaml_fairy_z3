@@ -1,0 +1,14 @@
+(include_subdirs unqualified)
+
+(library
+ (public_name ppx_z3)
+ (kind ppx_deriver)
+ (libraries ppxlib z3 fmt)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (synopsis "the library demo"))
+
+(env
+ (dev
+  (flags
+   (:standard -w -33 -w -26))))
