@@ -66,3 +66,18 @@ module Make_datatype (C : Z3_context) = struct
 
   let foo = 42
 end
+
+let dump_check solver exps =
+  match Solver.check solver exps with
+  | Solver.SATISFIABLE -> (
+      match Solver.get_model solver with
+      | None ->
+          failwith
+            ("check is not invoked before; " ^ "the result is not SAT; "
+           ^ " the model production is not enabled")
+      | Some model -> Fmt.pr "sat\n%s" (Model.to_string model))
+  | Solver.UNSATISFIABLE -> Fmt.pr "unsat"
+  | Solver.UNKNOWN ->
+      failwith
+      @@ Printf.sprintf "[check_and_get_model] Unknown result in solve: %s"
+           (Solver.get_reason_unknown solver)

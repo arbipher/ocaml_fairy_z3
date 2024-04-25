@@ -6,6 +6,9 @@ run:
 build:
 	dune build
 
+see:
+	dune build --auto-promote
+
 test:
 	dune runtest -f
 
