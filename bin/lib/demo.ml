@@ -4,6 +4,7 @@ type b = Stdlib.String.t
 type c = int
 type d = c
 
+let f x = match x with Foo (s, i) -> (s, i)
 let foo_string t = t
 let foo a b = a + b
 let a, b, c = (1, 2, 3)
