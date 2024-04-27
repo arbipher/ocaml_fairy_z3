@@ -75,9 +75,15 @@ let dump_check solver exps =
           failwith
             ("check is not invoked before; " ^ "the result is not SAT; "
            ^ " the model production is not enabled")
-      | Some model -> Fmt.pr "sat\n%s" (Model.to_string model))
-  | Solver.UNSATISFIABLE -> Fmt.pr "unsat"
+      | Some model ->
+          Fmt.pr "sat\n%s" (Model.to_string model) ;
+          Some model)
+  | Solver.UNSATISFIABLE ->
+      Fmt.pr "unsat" ;
+      None
   | Solver.UNKNOWN ->
       failwith
       @@ Printf.sprintf "[check_and_get_model] Unknown result in solve: %s"
            (Solver.get_reason_unknown solver)
+
+let dump_check_unit solver exps = ignore @@ dump_check solver exps
