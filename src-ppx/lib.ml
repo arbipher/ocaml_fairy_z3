@@ -17,9 +17,9 @@ module List = ListLabels
 
 let primitive_case_of_lid lid =
   match lid with
-  | Lident "int" -> Some Z3_datatype_helper.Int_case
-  | Lident "bool" -> Some Z3_datatype_helper.Bool_case
-  | Lident "string" -> Some Z3_datatype_helper.String_case
+  | Lident "int" -> Some Fairy_z3.Int_case
+  | Lident "bool" -> Some Fairy_z3.Bool_case
+  | Lident "string" -> Some Fairy_z3.String_case
   | _ -> None
 
 let unreachable_case loc =
@@ -27,10 +27,10 @@ let unreachable_case loc =
     case ~lhs:(ppat_any ~loc) ~guard:None ~rhs:[%expr failwith "not here"])
 
 let name_of_primitive_sort = function
-  | Z3_datatype_helper.Int_case -> "int"
-  | Z3_datatype_helper.Bool_case -> "bool"
-  | Z3_datatype_helper.String_case -> "string"
-  | Z3_datatype_helper.Bitvecetor_case -> "bitvector"
+  | Fairy_z3.Int_case -> "int"
+  | Fairy_z3.Bool_case -> "bool"
+  | Fairy_z3.String_case -> "string"
+  | Fairy_z3.Bitvecetor_case -> "bitvector"
 
 let primitive_case_of_lid_exn lid = Option.get (primitive_case_of_lid lid)
 
@@ -120,11 +120,10 @@ let ctors_of_variant loc cds =
           let sorts_code =
             payload_cases_of_cts cts
             |> List.map ~f:(function
-                 | Z3_datatype_helper.Int_case -> [%expr Some int_sort]
-                 | Z3_datatype_helper.Bool_case -> [%expr Some bool_sort]
-                 | Z3_datatype_helper.String_case -> [%expr Some string_sort]
-                 | Z3_datatype_helper.Bitvecetor_case ->
-                     [%expr Some bitvector_sort])
+                 | Fairy_z3.Int_case -> [%expr Some int_sort]
+                 | Fairy_z3.Bool_case -> [%expr Some bool_sort]
+                 | Fairy_z3.String_case -> [%expr Some string_sort]
+                 | Fairy_z3.Bitvecetor_case -> [%expr Some bitvector_sort])
             |> Ast_builder.Default.elist ~loc:Location.none
           in
           let all_ones_code =

@@ -3,10 +3,10 @@
 (library
  (public_name ppx_z3)
  (kind ppx_deriver)
- (libraries ppxlib z3 fmt)
+ (libraries fairy_z3 ppxlib z3 fmt)
  (preprocess
   (pps ppxlib.metaquot))
- (synopsis "the library demo"))
+ (synopsis "A ppx to derive z3 datatypes from OCaml types"))
 
 (env
  (dev

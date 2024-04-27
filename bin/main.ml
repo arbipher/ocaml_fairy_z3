@@ -142,8 +142,7 @@ let e2 = Expr.mk_const_s ctx "x" sort ;;
 
 dump e2
 
-let () =
-  Ppx_z3.Z3_datatype_helper.dump_check_unit solver [ Boolean.mk_eq ctx e1 e2 ]
+let () = Fairy_z3.dump_check_unit solver [ Boolean.mk_eq ctx e1 e2 ]
 
 type t = C1 of int * string | C2 of string * int
 [@@deriving_inline z3 ~flag ~bv_width:52]
@@ -304,20 +303,13 @@ let e2 =
 
 let i1 = prj_c1_0 e1
 let i2 = prj_c2_1 e2
-
-let () =
-  Ppx_z3.Z3_datatype_helper.dump_check_unit solver [ Boolean.mk_eq ctx i1 i2 ]
-
+let () = Fairy_z3.dump_check_unit solver [ Boolean.mk_eq ctx i1 i2 ]
 let e3 = box_t (C1 (42, "s1"))
 let e4 = Expr.mk_const_s ctx "x" sort
+let () = Fairy_z3.dump_check_unit solver [ Boolean.mk_eq ctx e1 e3 ]
 
 let () =
-  Ppx_z3.Z3_datatype_helper.dump_check_unit solver [ Boolean.mk_eq ctx e1 e3 ]
-
-let () =
-  match
-    Ppx_z3.Z3_datatype_helper.dump_check solver [ Boolean.mk_eq ctx e3 e4 ]
-  with
+  match Fairy_z3.dump_check solver [ Boolean.mk_eq ctx e3 e4 ] with
   | Some model -> (
       let v4 = Z3.Model.eval model e4 false |> Option.get in
       match unbox_t v4 with

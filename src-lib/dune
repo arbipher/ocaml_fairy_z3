@@ -1,0 +1,8 @@
+(library
+ (public_name fairy_z3)
+ (libraries z3 fmt))
+
+(env
+ (dev
+  (flags
+   (:standard -w -33 -w -26))))
