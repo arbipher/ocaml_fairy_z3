@@ -2,6 +2,10 @@
 
 The library `Fairy_z3` contains two packages `Fairy_z3` and `Ppx_z3`. `Fairy_z3` provides helper functions based on the OCaml [z3](https://opam.ocaml.org/packages/z3/). `Ppx_z3` is a ppx to derive a Z3 datatype and the functions e.g. `box`, `unbox`, `inj`, `prj`.
 
+For a step-by-step explanation for Z3.Datatype functions, check my tutorial post [Using `Z3.Datatype`](https://fairyland-ocaml.github.io/libraries/z3-datatype.html).
+
+## Example
+
 ```ocaml
 type t = C1 of int * string | C2 of string * int
 [@@deriving z3 ~flag ~bv_width:52]
