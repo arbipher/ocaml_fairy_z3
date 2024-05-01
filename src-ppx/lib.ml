@@ -12,6 +12,7 @@
 
 open Ppxlib
 module List = ListLabels
+open Ast_builder.Default
 
 [@@@warning "-27"]
 
@@ -23,8 +24,7 @@ let primitive_case_of_lid lid =
   | _ -> None
 
 let unreachable_case loc =
-  Ast_builder.Default.(
-    case ~lhs:(ppat_any ~loc) ~guard:None ~rhs:[%expr failwith "not here"])
+  case ~lhs:(ppat_any ~loc) ~guard:None ~rhs:[%expr failwith "not here"]
 
 let name_of_primitive_sort = function
   | Fairy_z3.Int_case -> "int"
@@ -58,10 +58,10 @@ let f payload =
 let magic = 42
 let args () = Deriving.Args.(empty +> arg "bv_width" (eint __) +> flag "flag")
 let _sort_of_record cdx = []
-let eoo = Ast_builder.Default.estring ~loc:Location.none "42"
-let estring s = Ast_builder.Default.estring ~loc:Location.none s
-let pvar s = Ast_builder.Default.pvar ~loc:Location.none s
-let evar s = Ast_builder.Default.evar ~loc:Location.none s
+let eoo = estring ~loc:Location.none "42"
+let estring s = estring ~loc:Location.none s
+let pvar_s s = pvar ~loc:Location.none s
+let evar_s s = evar ~loc:Location.none s
 
 let ids_of_variant prefix cds =
   List.map cds ~f:(fun cd ->
@@ -89,8 +89,8 @@ let payload_cases_of_cts cts =
 
 let payload_pat_of_core_types ~loc cts =
   payload_cases_of_cts cts
-  |> List.mapi ~f:(fun i _ -> pvar ("e" ^ string_of_int i))
-  |> Ast_builder.Default.ppat_tuple ~loc
+  |> List.mapi ~f:(fun i _ -> pvar_s ("e" ^ string_of_int i))
+  |> ppat_tuple ~loc
 
 let pat_of_variant_case ~loc name cts =
   let tag_name = { txt = Longident.parse name.txt; loc = name.loc } in
@@ -99,9 +99,9 @@ let pat_of_variant_case ~loc name cts =
       | Ptyp_constr (lid_loc, _cts) ->
           Some (primitive_case_of_lid_exn lid_loc.txt)
       | _ -> None)
-  |> List.mapi ~f:(fun i _ -> pvar ("e" ^ string_of_int i))
-  |> Ast_builder.Default.ppat_tuple ~loc
-  |> fun pat -> Ast_builder.Default.ppat_construct ~loc tag_name (Some pat)
+  |> List.mapi ~f:(fun i _ -> pvar_s ("e" ^ string_of_int i))
+  |> ppat_tuple ~loc
+  |> fun pat -> ppat_construct ~loc tag_name (Some pat)
 
 let ctors_of_variant loc cds =
   List.mapi cds ~f:(fun i cd ->
@@ -115,7 +115,7 @@ let ctors_of_variant loc cds =
             |> List.map ~f:(fun si -> case_Tag ^ "-" ^ string_of_int si)
             |> List.map ~f:(fun id ->
                    [%expr Symbol.mk_string ctx [%e estring id]])
-            |> Ast_builder.Default.elist ~loc:Location.none
+            |> elist ~loc:Location.none
           in
           let sorts_code =
             payload_cases_of_cts cts
@@ -124,15 +124,15 @@ let ctors_of_variant loc cds =
                  | Fairy_z3.Bool_case -> [%expr Some bool_sort]
                  | Fairy_z3.String_case -> [%expr Some string_sort]
                  | Fairy_z3.Bitvecetor_case -> [%expr Some bitvector_sort])
-            |> Ast_builder.Default.elist ~loc:Location.none
+            |> elist ~loc:Location.none
           in
           let all_ones_code =
             List.init ~len:(List.length cts) ~f:(fun _ -> 1)
-            |> List.map ~f:(Ast_builder.Default.eint ~loc:Location.none)
-            |> Ast_builder.Default.elist ~loc:Location.none
+            |> List.map ~f:(eint ~loc:Location.none)
+            |> elist ~loc:Location.none
           in
           [%str
-            let [%p pvar ("ctor_" ^ case_tag)] =
+            let [%p pvar_s ("ctor_" ^ case_tag)] =
               Datatype.mk_constructor_s ctx [%e estring case_Tag]
                 (Symbol.mk_string ctx [%e estring ("is-" ^ case_Tag)])
                 [%e acceesor_code] [%e sorts_code] [%e all_ones_code]]
@@ -146,9 +146,9 @@ let decls_of_variant loc cds =
       match cd.pcd_args with
       | Pcstr_tuple cts ->
           [%str
-            let [%p pvar ("decl_" ^ case_tag)] =
+            let [%p pvar_s ("decl_" ^ case_tag)] =
               Datatype.Constructor.get_constructor_decl
-                [%e evar ("ctor_" ^ case_tag)]]
+                [%e evar_s ("ctor_" ^ case_tag)]]
       | Pcstr_record _lds -> [])
   |> List.concat
 
@@ -174,39 +174,37 @@ let inj_and_prj_of_variant loc cds =
   *)
   let more_code =
     let rzer_ids = ids_of_variant "rzer_" cds in
-    let rzer_pats = List.map rzer_ids ~f:pvar in
-    let pat_rzers = Ast_builder.Default.ppat_tuple ~loc rzer_pats in
-    let rzer_id_exps =
-      List.map rzer_ids ~f:evar |> Ast_builder.Default.pexp_tuple ~loc
-    in
+    let rzer_pats = List.map rzer_ids ~f:pvar_s in
+    let pat_rzers = ppat_tuple ~loc rzer_pats in
+    let rzer_id_exps = List.map rzer_ids ~f:evar_s |> pexp_tuple ~loc in
 
     let asor_ids = ids_of_variant_payload "asor_" cds in
     let asor_pats =
       List.map asor_ids ~f:(fun asor_case_ids ->
-          List.map asor_case_ids ~f:pvar |> Ast_builder.Default.plist ~loc)
-      |> Ast_builder.Default.plist ~loc
+          List.map asor_case_ids ~f:pvar_s |> plist ~loc)
+      |> plist ~loc
     in
     (* let asor_pats_listed =
          List.map asor_ids ~f:pvar
-         |> List.map ~f:(fun pat -> Ast_builder.Default.plist ~loc [ pat ])
+         |> List.map ~f:(fun pat -> plist ~loc [ pat ])
        in *)
     let pat_asors =
       List.map asor_ids ~f:(fun asor_case_ids ->
-          List.map asor_case_ids ~f:pvar |> Ast_builder.Default.ppat_tuple ~loc)
-      |> Ast_builder.Default.ppat_tuple ~loc
+          List.map asor_case_ids ~f:pvar_s |> ppat_tuple ~loc)
+      |> ppat_tuple ~loc
     in
-    (* Ast_builder.Default.ppat_tuple ~loc asor_pats in *)
+    (* ppat_tuple ~loc asor_pats in *)
     let asor_id_exps =
       List.map asor_ids ~f:(fun asor_case_ids ->
-          List.map asor_case_ids ~f:evar |> Ast_builder.Default.pexp_tuple ~loc)
-      |> Ast_builder.Default.pexp_tuple ~loc
+          List.map asor_case_ids ~f:evar_s |> pexp_tuple ~loc)
+      |> pexp_tuple ~loc
     in
     (* TODO: don't have to use this code. The pattern is only used for guarding *)
     let recognizer_code =
       [%str
         let [%p pat_rzers] =
           match Datatype.get_recognizers sort with
-          | [%p Ast_builder.Default.plist ~loc rzer_pats] -> [%e rzer_id_exps]
+          | [%p plist ~loc rzer_pats] -> [%e rzer_id_exps]
           | _ -> failwith "recogniziers mismatch"
 
         let [%p pat_asors] =
@@ -224,28 +222,29 @@ let inj_and_prj_of_variant loc cds =
         | Pcstr_tuple cts ->
             let list_of_core_types =
               payload_cases_of_cts cts
-              |> List.mapi ~f:(fun i _ -> evar ("e" ^ string_of_int i))
-              |> Ast_builder.Default.elist ~loc
+              |> List.mapi ~f:(fun i _ -> evar_s ("e" ^ string_of_int i))
+              |> elist ~loc
             in
 
             let inj_code =
               [%str
-                let [%p pvar ("inj_" ^ case_tag)] =
+                let [%p pvar_s ("inj_" ^ case_tag)] =
                  fun [%p payload_pat_of_core_types ~loc cts] ->
                   FuncDecl.apply
-                    [%e evar ("decl_" ^ case_tag)]
+                    [%e evar_s ("decl_" ^ case_tag)]
                     [%e list_of_core_types]
 
-                let [%p pvar ("is_" ^ case_tag)] =
-                 fun e -> FuncDecl.apply [%e evar ("rzer_" ^ case_tag)] [ e ]]
+                let [%p pvar_s ("is_" ^ case_tag)] =
+                 fun e -> FuncDecl.apply [%e evar_s ("rzer_" ^ case_tag)] [ e ]]
             in
             let prj_code =
               List.mapi cts ~f:(fun i _ ->
                   [%str
-                    let [%p pvar ("prj_" ^ case_tag ^ "_" ^ string_of_int i)] =
+                    let [%p pvar_s ("prj_" ^ case_tag ^ "_" ^ string_of_int i)]
+                        =
                      fun e ->
                       FuncDecl.apply
-                        [%e evar ("asor_" ^ case_tag ^ "_" ^ string_of_int i)]
+                        [%e evar_s ("asor_" ^ case_tag ^ "_" ^ string_of_int i)]
                         [ e ]])
               |> List.concat
             in
@@ -257,7 +256,6 @@ let inj_and_prj_of_variant loc cds =
   more_code @ some_code
 
 let box_of_variant loc td cds =
-  let open Ast_builder.Default in
   let box_id = td.ptype_name.txt in
   let box_code =
     List.filter_map cds ~f:(fun cd ->
@@ -274,7 +272,7 @@ let box_of_variant loc td cds =
                        let f = evar ~loc ("box_" ^ name_of_primitive_sort ps) in
                        let a = evar ~loc ("e" ^ string_of_int i) in
                        [%expr [%e f] [%e a]])
-                |> Ast_builder.Default.pexp_tuple ~loc
+                |> pexp_tuple ~loc
               in
               [%expr [%e inj_f] [%e arg]]
             in
@@ -288,7 +286,7 @@ let box_of_variant loc td cds =
         let f_is = evar ~loc ("is_" ^ case_tag) in
         match cd.pcd_args with
         | Pcstr_tuple cts ->
-            let lhs = Ast_builder.Default.ppat_any ~loc in
+            let lhs = ppat_any ~loc in
             let guard =
               Some [%expr Expr.simplify ([%e f_is] e) None |> unbox_bool]
             in
@@ -305,9 +303,8 @@ let box_of_variant loc td cds =
                             e)
                          None
                        |> [%e evar ~loc ("unbox_" ^ name_of_primitive_sort ps)]])
-              |> Ast_builder.Default.pexp_tuple ~loc
-              |> fun e ->
-              Ast_builder.Default.pexp_construct ~loc tag_name (Some e)
+              |> pexp_tuple ~loc
+              |> fun e -> pexp_construct ~loc tag_name (Some e)
             in
             Some (case ~lhs ~guard ~rhs)
         | Pcstr_record _lds -> None)
@@ -333,11 +330,11 @@ let generate_impl ~ctxt (_rec_flag, type_declarations) bv_width_opt flag =
           let ctor_ids = ids_of_variant "ctor_" cds in
           let ctor_sort_opts =
             List.map ctor_ids ~f:(fun pid ->
-                [%expr [%e Ast_builder.Default.evar ~loc:Location.none pid]])
-            |> Ast_builder.Default.elist ~loc:Location.none
+                [%expr [%e evar ~loc:Location.none pid]])
+            |> elist ~loc:Location.none
           in
           let t_ml =
-            Ast_builder.Default.ptyp_constr ~loc:Location.none
+            ptyp_constr ~loc:Location.none
               { txt = Longident.parse ptype_name.txt; loc = Location.none }
               []
           in
@@ -353,7 +350,7 @@ let generate_impl ~ctxt (_rec_flag, type_declarations) bv_width_opt flag =
                 let int_sort = Arithmetic.Integer.mk_sort ctx
                 let bool_sort = Boolean.mk_sort ctx
                 let string_sort = Seq.mk_string_sort ctx
-                let bv_width = [%e Ast_builder.Default.eint ~loc bv_width]
+                let bv_width = [%e eint ~loc bv_width]
                 let bitvector_sort = BitVector.mk_sort ctx bv_width
                 let box_int i = Arithmetic.Integer.mk_numeral_i ctx i
                 let box_bool b = Boolean.mk_val ctx b
@@ -388,11 +385,11 @@ let generate_impl ~ctxt (_rec_flag, type_declarations) bv_width_opt flag =
             @ box_of_variant loc td cds
           in
           let mb =
-            Ast_builder.Default.module_binding ~loc:Location.none
+            module_binding ~loc:Location.none
               ~name:Location.{ txt = Some "Z3_this"; loc = none }
-              ~expr:(Ast_builder.Default.pmod_structure ~loc:Location.none defs)
+              ~expr:(pmod_structure ~loc:Location.none defs)
           in
-          [ Ast_builder.Default.pstr_module ~loc:Location.none mb ]
+          [ pstr_module ~loc:Location.none mb ]
       | _ -> [])
     |> List.concat
   in
