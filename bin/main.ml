@@ -8,8 +8,7 @@ include struct
 
   let _ = fun (_ : a) -> ()
 
-  module Z3_this = struct
-    module Not_here = struct end
+  module Z3_datatype_for_a = struct
     open Z3
 
     type t_ml = a
@@ -17,47 +16,19 @@ include struct
 
     let ctx = mk_context []
     let _ = ctx
-    let int_sort = Arithmetic.Integer.mk_sort ctx
-    let _ = int_sort
-    let bool_sort = Boolean.mk_sort ctx
-    let _ = bool_sort
-    let string_sort = Seq.mk_string_sort ctx
-    let _ = string_sort
-    let bv_width = 52
-    let _ = bv_width
-    let bitvector_sort = BitVector.mk_sort ctx bv_width
-    let _ = bitvector_sort
-    let box_int i = Arithmetic.Integer.mk_numeral_i ctx i
-    let _ = box_int
-    let box_bool b = Boolean.mk_val ctx b
-    let _ = box_bool
-    let box_string s = Seq.mk_string ctx s
-    let _ = box_string
 
-    let unbox_int e =
-      e |> Arithmetic.Integer.get_big_int |> Big_int_Z.int_of_big_int
+    module Z3_primitive =
+      Fairy_z3.Make_primitive
+        (struct
+          let ctx = ctx
+          let _ = ctx
+        end)
+        (struct
+          let bv_width = 52
+          let _ = bv_width
+        end)
 
-    let _ = unbox_int
-
-    let unbox_bool v =
-      match Boolean.get_bool_value v with
-      | L_TRUE -> true
-      | L_FALSE -> false
-      | L_UNDEF -> false
-
-    let _ = unbox_bool
-
-    let unbox_bool_exn v =
-      match Boolean.get_bool_value v with
-      | L_TRUE -> true
-      | L_FALSE -> false
-      | L_UNDEF -> failwith "L_UNDEF"
-
-    let _ = unbox_bool_exn
-    let unbox_string e = Seq.get_string ctx e
-    let _ = unbox_string
-    let box_bitvector i = BitVector.mk_numeral ctx (Int.to_string i) bv_width
-    let _ = box_bitvector
+    open Z3_primitive
 
     let ctor_foo =
       Datatype.mk_constructor_s ctx "Foo"
@@ -126,6 +97,8 @@ include struct
 
     let _ = unbox_a
   end
+
+  open Z3_datatype_for_a
 end [@@ocaml.doc "@inline"]
 
 [@@@end]
@@ -134,7 +107,7 @@ open Z3
 
 let dump e = Fmt.pr "%s" (Expr.to_string e)
 
-open Z3_this
+open Z3_datatype_for_a
 
 let solver = Solver.mk_solver ctx None
 let e1 = inj_baz @@ Arithmetic.Integer.mk_numeral_i ctx 3
@@ -152,8 +125,7 @@ include struct
 
   let _ = fun (_ : t) -> ()
 
-  module Z3_this = struct
-    module Not_here = struct end
+  module Z3_datatype_for_t = struct
     open Z3
 
     type t_ml = t
@@ -161,47 +133,19 @@ include struct
 
     let ctx = mk_context []
     let _ = ctx
-    let int_sort = Arithmetic.Integer.mk_sort ctx
-    let _ = int_sort
-    let bool_sort = Boolean.mk_sort ctx
-    let _ = bool_sort
-    let string_sort = Seq.mk_string_sort ctx
-    let _ = string_sort
-    let bv_width = 52
-    let _ = bv_width
-    let bitvector_sort = BitVector.mk_sort ctx bv_width
-    let _ = bitvector_sort
-    let box_int i = Arithmetic.Integer.mk_numeral_i ctx i
-    let _ = box_int
-    let box_bool b = Boolean.mk_val ctx b
-    let _ = box_bool
-    let box_string s = Seq.mk_string ctx s
-    let _ = box_string
 
-    let unbox_int e =
-      e |> Arithmetic.Integer.get_big_int |> Big_int_Z.int_of_big_int
+    module Z3_primitive =
+      Fairy_z3.Make_primitive
+        (struct
+          let ctx = ctx
+          let _ = ctx
+        end)
+        (struct
+          let bv_width = 52
+          let _ = bv_width
+        end)
 
-    let _ = unbox_int
-
-    let unbox_bool v =
-      match Boolean.get_bool_value v with
-      | L_TRUE -> true
-      | L_FALSE -> false
-      | L_UNDEF -> false
-
-    let _ = unbox_bool
-
-    let unbox_bool_exn v =
-      match Boolean.get_bool_value v with
-      | L_TRUE -> true
-      | L_FALSE -> false
-      | L_UNDEF -> failwith "L_UNDEF"
-
-    let _ = unbox_bool_exn
-    let unbox_string e = Seq.get_string ctx e
-    let _ = unbox_string
-    let box_bitvector i = BitVector.mk_numeral ctx (Int.to_string i) bv_width
-    let _ = box_bitvector
+    open Z3_primitive
 
     let ctor_c1 =
       Datatype.mk_constructor_s ctx "C1"
@@ -283,11 +227,13 @@ include struct
 
     let _ = unbox_t
   end
+
+  open Z3_datatype_for_t
 end [@@ocaml.doc "@inline"]
 
 [@@@end]
 
-open Z3_this
+open Z3_datatype_for_t
 
 let solver = Solver.mk_solver ctx None
 
