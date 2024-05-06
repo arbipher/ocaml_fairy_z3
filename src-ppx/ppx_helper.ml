@@ -12,8 +12,7 @@ open Ast_builder.Default
    | Typ_array
    | Typ_list *)
 
-let mod_id_of_str ~loc s =
-  pmod_ident ~loc (Loc.make ~loc (lident s)
+let mod_id_of_str ~loc s = pmod_ident ~loc (Loc.make ~loc (lident s))
 
 let primitive_case_of_lid lid =
   match lid with
