@@ -7,7 +7,10 @@ write a better description."""
 authors: ["Shiwei Weng <shiwei@prover.me>"]
 depends: [
   "dune" {>= "3.6"}
+  "z3"
+  "fmt"
   "alcotest" {with-test}
+  "ppx_expect" {with-test}
   "odoc" {with-doc}
 ]
 build: [

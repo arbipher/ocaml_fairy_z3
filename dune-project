@@ -12,7 +12,10 @@
  (synopsis "A helper library for Z3")
  (description "I shall better \nwrite a better description.")
  (depends
-  (alcotest :with-test)))
+  z3
+  fmt
+  (alcotest :with-test)
+  (ppx_expect :with-test)))
 
 (package
  (name ppx_z3)

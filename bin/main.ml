@@ -97,8 +97,6 @@ include struct
 
     let _ = unbox_a
   end
-
-  open Z3_datatype_for_a
 end [@@ocaml.doc "@inline"]
 
 [@@@end]
@@ -227,8 +225,6 @@ include struct
 
     let _ = unbox_t
   end
-
-  open Z3_datatype_for_t
 end [@@ocaml.doc "@inline"]
 
 [@@@end]

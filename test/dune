@@ -2,6 +2,6 @@
  (names test)
  (libraries alcotest ppx_z3)
  (preprocess
-  (pps ppx_z3))
+  (pps ppx_z3 ppx_expect))
  (action
   (run %{test} -e)))

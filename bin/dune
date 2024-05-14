@@ -1,5 +1,5 @@
-(executable
- (name main)
+(executables
+ (names main bool_logic)
  (libraries z3 fmt fairy_z3)
  (preprocess
   (pps ppx_z3 ppxlib.metaquot))

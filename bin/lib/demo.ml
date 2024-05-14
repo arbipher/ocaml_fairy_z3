@@ -13,5 +13,3 @@ module M = struct
   let m1 = 1
   let m2 = 2
 end
-
-open M

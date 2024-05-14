@@ -30,6 +30,10 @@
    2. antiquote %lid
 *)
 
+(*
+   how to expree _uninterpreted function_
+*)
+
 open Ppxlib
 module List = ListLabels
 open Ppx_helper
@@ -112,6 +116,7 @@ let decls_of_variant loc cds =
 
 module With_loc (L : sig
   val loc : location
+  val z3_ctx : Z3.context
   val bv_width : int
   val type_declarations : type_declaration list
 end) =
@@ -277,7 +282,7 @@ struct
               type t_ml = [%t t_ml]
               type t_z3 = Expr.expr
 
-              let ctx = mk_context []
+              let ctx = z3_ctx
 
               module Z3_primitive =
                 Fairy_z3.Make_primitive
@@ -318,15 +323,51 @@ struct
     |> List.concat
 end
 
-let generate_impl ~ctxt (_rec_flag, type_declarations) bv_width_opt flag =
+let generate_impl ~ctxt (_rec_flag, type_declarations) z3_ctx_opt bv_width_opt
+    flag =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   let module Code_gen = With_loc (struct
     let loc = loc
     let _ = flag
+    let z3_ctx = Option.get z3_ctx_opt
     let bv_width = Option.value bv_width_opt ~default:63
     let type_declarations = type_declarations
   end) in
   Code_gen.whole_code
+
+(* let _i = Deriving.Args.int
+   let _i42 = Deriving.Args.int 42
+   let _1 = Deriving.Args.__
+   let _2 = Deriving.Args.eint
+   let _3 = Deriving.Args.(eint __)
+   let _4 = Deriving.Args.(arg "name")
+   let _5 = Deriving.Args.(single_expr_payload __) *)
+
+(* let de_option x = Ast_pattern.map x ~f:Option.get *)
+
+(* let z3_ctx_pattern : (bool, 'a, 'a) Ast_pattern.t =
+     Ast_pattern.cst ~to_string:(fun _ -> "Z3 context") true
+
+   (* let e_z3 : (bool, 'a, 'a) Ast_pattern.t -> (expression, 'a, 'a) Ast_pattern.t = *)
+   let _ = Ppxlib.Ast_pattern.pconst_integer
+
+   let e_z3 =
+     Ast_pattern.of_func (fun _ctx loc x k ->
+         match x with
+         | true ->
+             (* ctx.matched <- ctx.matched + 1; *)
+             k
+         | _ -> failwith "aha")
+
+   let int' tf =
+     let f = Ast_pattern.to_func tf in
+     let f' ctx loc x k = f ctx loc (int_of_string x) k in
+     Ast_pattern.of_func f'
+
+   let const_int t = Ast_pattern.pconst_integer (int' t) Ast_pattern.none
+   let eint t = Ast_pattern.pexp_constant (const_int t)
+   let loc = Location.none
+   let a = match [%expr Z3.mk_context []] with [%expr [%e? zz]] -> zz *)
 
 let args () = Deriving.Args.(empty +> arg "bv_width" (eint __) +> flag "flag")
 let impl_generator () = Deriving.Generator.V2.make (args ()) generate_impl
